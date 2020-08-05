@@ -1,24 +1,17 @@
-# Notes
+# Manual setup
 
-There are simulation accounts and other accounts. I don't think I have anything setup with a real account yet.
+Install the hootnot library.
+
+    pip install git+https://github.com/hootnot/saxo_openapi.git
+
+There are simulation accounts and other accounts. Start with the simulation account.
 
 The simulation accounts expire after 20 days. Go to https://www.developer.saxo/accounts/sim/signup to create a new one.
 
-You can get a 24 hour token here: https://www.developer.saxo/openapi/token put it in .cred/saxo/saxo_token.txt ... I do this probably to make the example notebooks usable.
+Then you need a token.  You can get a 24 hour token here: https://www.developer.saxo/openapi/token put it in `.cred/saxo/saxo_token.txt`
 
-Go here to try things out:
+Go here to try things out: https://www.developer.saxo/openapi/explorer#/
 
-https://www.developer.saxo/openapi/explorer#/
+# Example
 
-
-You can get the account info from the instantiated client ... see `helper.account_info`
-
-
-# Examples
-
-The following worked.
-
-https://saxo-openapi.readthedocs.io/en/latest/examples/stream_proc.html#subscriptions-using-saxo-openapi
-
-python stream_example.py ctxt_20190311
-python price_subscr.py ctxt_20190311 EURJPY EURGBP
+Then see the `Makefile`.

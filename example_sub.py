@@ -1,30 +1,50 @@
 #!/usr/bin/env python
-import json
 import asyncio
-import websockets
-from saxo_openapi.contrib.ws import stream
-import argh
+import json
+import os
 import sys
-from my.gym.saxo import get_token
+
+import argh
 import saxo_openapi.contrib.session as session
+import websockets
 from saxo_openapi import API
-from saxo_openapi.endpoints import chart, apirequest, decorators, portfolio, \
-    referencedata, trading, valueadd, eventnotificationservices, rootservices, accounthistory
+from saxo_openapi.contrib.ws import stream
+from saxo_openapi.endpoints import (
+    accounthistory,
+    apirequest,
+    chart,
+    decorators,
+    eventnotificationservices,
+    portfolio,
+    referencedata,
+    rootservices,
+    trading,
+    valueadd,
+)
+
+_TOKEN_FILENAME = os.path.expanduser("~/.cred/saxo/saxo_token.txt")
+
+
+def get_token(filename=_TOKEN_FILENAME):
+    return open(filename).read().strip()
 
 
 async def echo(ContextId, token):
     hdrs = {
         "Authorization": "Bearer {}".format(token),
     }
-    URL = "wss://streaming.saxotrader.com/sim/openapi/streamingws/connect?" + \
-          "contextId={ContextId}".format(ContextId=ContextId)
+    URL = "wss://streaming.saxotrader.com/sim/openapi/streamingws/connect?" + "contextId={ContextId}".format(
+        ContextId=ContextId
+    )
     async with websockets.connect(URL, extra_headers=hdrs) as websocket:
         async for message in websocket:
             print(stream.decode_ws_msg(message))
 
+
 def read_sub(context_id):
     token = get_token()
     asyncio.get_event_loop().run_until_complete(echo(ContextId=context_id, token=token))
+
 
 def create_price_sub(context_id, *instruments):
     """fetch instrument data by the name of the instrument and extract the Uic (Identifier)
@@ -36,21 +56,11 @@ def create_price_sub(context_id, *instruments):
     account_info = session.account_info(client=client)
 
     # body template for price subscription
-    body = {
-       "Arguments": {
-           "Uic": "",
-           "AssetType": "FxSpot"
-       },
-       "ContextId": "",
-       "ReferenceId": ""
-    }
+    body = {"Arguments": {"Uic": "", "AssetType": "FxSpot"}, "ContextId": "", "ReferenceId": ""}
     body['ContextId'] = context_id
 
     for instrument in instruments:
-        params = {'AccountKey': account_info.AccountKey,
-                  'AssetTypes': 'FxSpot',
-                  'Keywords': instrument
-                 }
+        params = {'AccountKey': account_info.AccountKey, 'AssetTypes': 'FxSpot', 'Keywords': instrument}
         # create the request to fetch Instrument info
         req = referencedata.instruments.Instruments(params=params)
         rv = client.request(req)
@@ -67,6 +77,7 @@ def create_price_sub(context_id, *instruments):
         status = "succesful" if req.status_code == req.expected_status else "failed"
         print(f"Subscription for instrument: {instrument} {status}")
 
+
 def delete_price_sub(context_id, *, ref_id=None):
     token = get_token()
     client = API(access_token=token)
@@ -79,6 +90,6 @@ def delete_price_sub(context_id, *, ref_id=None):
     status = "succesful" if req.status_code == req.expected_status else "failed"
     print(f"price sub delete: {context_id} {ref_id} {status}")
 
+
 if __name__ == "__main__":
     argh.dispatch_commands([read_sub, create_price_sub, delete_price_sub])
-
